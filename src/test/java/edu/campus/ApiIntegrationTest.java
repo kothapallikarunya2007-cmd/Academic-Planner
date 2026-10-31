@@ -33,7 +33,21 @@ class ApiIntegrationTest {
         assertEquals(400,request(admin,"login","[]").statusCode());
         login(admin,"admin@campus.edu","Admin@12345");login(faculty,"ananya@campus.edu","Faculty@12345");
         assertEquals(403,request(faculty,"generate","{}").statusCode());assertEquals(403,request(faculty,"report",null).statusCode());
-        assertEquals(200,request(admin,"generate","{}").statusCode());assertTrue(request(admin,"report",null).body().contains("Advanced Java"));
+        assertEquals(200,request(admin,"generate","{}").statusCode());
+        assertFalse(request(admin,"report",null).body().contains("Advanced Java")); // Generation only creates a draft.
+        assertEquals(200,request(admin,"users",ApiServlet.JSON.writeValueAsString(Map.of("name","Reviewer","email","review@campus.edu","role","ADMIN","department","Office","password","ReviewPassword123"))).statusCode());
+        HttpClient reviewer=HttpClient.newBuilder().cookieHandler(new CookieManager(null,CookiePolicy.ACCEPT_ALL)).build();login(reviewer,"review@campus.edu","ReviewPassword123");
+        String draft;try(var c=service.db.open()){draft=(String)Database.rows(c,"SELECT id FROM schedule_versions WHERE status='DRAFT'").get(0).get("id");}
+        assertEquals(200,request(admin,"schedule/submit",ApiServlet.JSON.writeValueAsString(Map.of("id",draft))).statusCode());
+        assertEquals(409,request(admin,"schedule/approve",ApiServlet.JSON.writeValueAsString(Map.of("id",draft))).statusCode());
+        assertEquals(200,request(reviewer,"schedule/approve",ApiServlet.JSON.writeValueAsString(Map.of("id",draft))).statusCode());
+        assertEquals(200,request(admin,"schedule/publish",ApiServlet.JSON.writeValueAsString(Map.of("id",draft))).statusCode());
+        assertTrue(request(admin,"report",null).body().contains("Advanced Java"));
+        assertEquals(403,request(faculty,"export?format=json",null).statusCode());
+        assertEquals(403,request(faculty,"imports","{}").statusCode());
+        assertEquals(200,request(admin,"export?format=ics",null).statusCode());
+        assertTrue(request(admin,"export?format=ics",null).body().contains("BEGIN:VCALENDAR"));
+        assertFalse(request(admin,"export?format=json",null).body().contains("password_hash"));
         assertEquals(409,request(admin,"rooms","{\"name\":\"Bad\",\"capacity\":-1}").statusCode());
         var state=request(admin,"state",null);assertEquals(200,state.statusCode());assertFalse(state.body().contains("password_hash"));
         assertEquals(200,request(admin,"logout","{}").statusCode());assertEquals(401,request(admin,"me",null).statusCode());

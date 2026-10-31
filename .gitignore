@@ -7,3 +7,6 @@ runtime/
 .env
 .idea/
 *.iml
+
+.env.*
+.vercel/

@@ -1,5 +1,7 @@
 # Design notes
 
+The extended calendar, workflow and delivery model is documented in [Academic features](ACADEMIC_FEATURES.md). Additional tables store calendar settings, holidays, leave, course patterns, exam options/staff, schedule versions, notification preferences and the delivery outbox.
+
 ## Data model
 
 ```mermaid
@@ -31,7 +33,7 @@ All IDs are UUID strings except stable demonstration IDs. `coordination_lock` co
 ## Important tradeoffs
 
 - A shared row lock favors understandable consistency over high write throughput. Chat writes also use this lock, so large scheduling searches can delay messages. A production implementation should separate chat write coordination and shorten schedule publication locks using version checks.
-- Schedules are weekly, not date-ranged. An exam blocks a recurring class on its weekday, even though it occurs once. This is conservative and clearly surfaced in the UI.
+- Teaching templates are expanded within the configured semester, A/B pattern and calendar exceptions. Exams are checked against actual teaching dates. Leave cancels teaching; it does not automatically create replacements.
 - The timetable search is bounded. A failure may mean impossible constraints or an exhausted search budget.
 - Invigilation balances assignments greedily within a backtracking search; it does not optimize a global fairness score.
 - SSE broadcasts are process-local. Multiple application instances use the same database locking strategy, but cross-instance browser updates arrive through 30-second refresh rather than a message broker.

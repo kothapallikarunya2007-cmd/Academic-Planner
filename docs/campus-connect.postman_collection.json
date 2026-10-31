@@ -464,6 +464,312 @@
           }
         }
       }
+    },
+    {
+      "name": "Academic features",
+      "item": [
+        {
+          "name": "Configure semester",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"semester_start\": \"2026-11-02\",\n  \"semester_end\": \"2026-11-29\",\n  \"timezone\": \"Asia/Kolkata\",\n  \"teaching_days\": [\n    0,\n    1,\n    2,\n    3,\n    4\n  ],\n  \"periods\": [\n    \"09:00-10:00\",\n    \"10:00-11:00\",\n    \"11:15-12:15\",\n    \"13:00-14:00\",\n    \"14:00-15:00\",\n    \"15:15-16:15\"\n  ]\n}"
+            },
+            "url": "{{baseUrl}}/api/academic/settings"
+          }
+        },
+        {
+          "name": "Holiday",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"holiday_date\": \"2026-11-09\",\n  \"label\": \"Campus holiday\"\n}"
+            },
+            "url": "{{baseUrl}}/api/holiday"
+          }
+        },
+        {
+          "name": "Faculty leave",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"faculty_id\": \"faculty-0\",\n  \"start_date\": \"2026-11-16\",\n  \"end_date\": \"2026-11-16\"\n}"
+            },
+            "url": "{{baseUrl}}/api/leave"
+          }
+        },
+        {
+          "name": "Course pattern",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"course-0\",\n  \"week_pattern\": \"A\"\n}"
+            },
+            "url": "{{baseUrl}}/api/course/pattern"
+          }
+        },
+        {
+          "name": "Multi-period exam",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"course_id\": \"course-0\",\n  \"room_id\": \"room-0\",\n  \"exam_date\": \"2026-11-07\",\n  \"slot_no\": 0,\n  \"duration\": 2,\n  \"required_staff\": 2\n}"
+            },
+            "url": "{{baseUrl}}/api/exams"
+          }
+        },
+        {
+          "name": "Import rooms",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"entity\": \"rooms\",\n  \"csv\": \"name,capacity\\nImported room,80\"\n}"
+            },
+            "url": "{{baseUrl}}/api/imports"
+          }
+        },
+        {
+          "name": "Notification preference",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"channel\": \"EMAIL\",\n  \"destination\": \"member@example.edu\",\n  \"enabled\": true\n}"
+            },
+            "url": "{{baseUrl}}/api/delivery/preferences"
+          }
+        },
+        {
+          "name": "Institutional sync",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            },
+            "url": "{{baseUrl}}/api/integration/sync"
+          }
+        },
+        {
+          "name": "Schedule submit",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{versionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/submit"
+          }
+        },
+        {
+          "name": "Schedule approve",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{versionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/approve"
+          }
+        },
+        {
+          "name": "Schedule reject",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{versionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/reject"
+          }
+        },
+        {
+          "name": "Schedule publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{versionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/publish"
+          }
+        },
+        {
+          "name": "Schedule restore",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "X-Campus-Request",
+                "value": "1"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"id\": \"{{versionId}}\"\n}"
+            },
+            "url": "{{baseUrl}}/api/schedule/restore"
+          }
+        },
+        {
+          "name": "Dated classes",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/occurrences"
+          }
+        },
+        {
+          "name": "Academic JSON",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/export?format=json"
+          }
+        },
+        {
+          "name": "Calendar export",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/export?format=ics"
+          }
+        },
+        {
+          "name": "Exam CSV",
+          "request": {
+            "method": "GET",
+            "url": "{{baseUrl}}/api/export?format=csv&entity=exams"
+          }
+        }
+      ]
     }
   ]
 }

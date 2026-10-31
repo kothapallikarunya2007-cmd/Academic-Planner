@@ -35,6 +35,8 @@ public final class Database {
     public void initialize(boolean seed) throws Exception {
         try(Connection c=open(); Statement s=c.createStatement()) {
             for(String ddl: List.of(
+                "CREATE TABLE IF NOT EXISTS app_sessions(token_hash VARCHAR(64) PRIMARY KEY,user_id VARCHAR(36) NOT NULL,expires_at BIGINT NOT NULL)",
+                "CREATE TABLE IF NOT EXISTS login_attempts(account VARCHAR(150) PRIMARY KEY,window_start BIGINT NOT NULL,attempts INT NOT NULL)",
                 "CREATE TABLE IF NOT EXISTS coordination_lock(id INT PRIMARY KEY)",
                 "CREATE TABLE IF NOT EXISTS users(id VARCHAR(36) PRIMARY KEY,name VARCHAR(100) NOT NULL,email VARCHAR(150) NOT NULL UNIQUE,password_hash VARCHAR(200) NOT NULL,role VARCHAR(10) NOT NULL,department VARCHAR(100) NOT NULL)",
                 "CREATE TABLE IF NOT EXISTS rooms(id VARCHAR(36) PRIMARY KEY,name VARCHAR(80) NOT NULL UNIQUE,capacity INT NOT NULL)",
@@ -46,11 +48,13 @@ public final class Database {
                 "CREATE TABLE IF NOT EXISTS notifications(id VARCHAR(36) PRIMARY KEY,body VARCHAR(500) NOT NULL,created_at BIGINT NOT NULL)",
                 "CREATE TABLE IF NOT EXISTS notification_reads(user_id VARCHAR(36) NOT NULL,notification_id VARCHAR(36) NOT NULL,PRIMARY KEY(user_id,notification_id),FOREIGN KEY(user_id) REFERENCES users(id),FOREIGN KEY(notification_id) REFERENCES notifications(id))"
             )) s.execute(ddl);
-            if(rows(c,"SELECT id FROM coordination_lock").isEmpty()) exec(c,"INSERT INTO coordination_lock VALUES(1)");
+            try { exec(c,"INSERT INTO coordination_lock VALUES(1)"); } catch(SQLException e) { if(!"23505".equals(e.getSQLState()) && e.getErrorCode()!=1062) throw e; }
         }
+        try(Connection c=open()) { Academic.upgrade(c); }
         transaction(c -> {
             if(rows(c,"SELECT id FROM users").isEmpty()) {
                 String adminPassword=System.getenv().getOrDefault("ADMIN_PASSWORD","Admin@12345");
+                if(Deployment.production() && (adminPassword.length()<16 || adminPassword.equals("Admin@12345"))) throw new IllegalStateException("Initialization requires a unique ADMIN_PASSWORD of at least 16 characters.");
                 exec(c,"INSERT INTO users VALUES(?,?,?,?,?,?)","admin","Campus Administrator","admin@campus.edu",Passwords.hash(adminPassword),"ADMIN","Administration");
                 if(seed) {
                     String[] names={"Ananya Sharma","Rahul Mehta","Priya Nair","Arjun Rao"};
@@ -67,5 +71,5 @@ public final class Database {
             return null;
         });
     }
-    public static void notify(Connection c,String message) throws SQLException { exec(c,"INSERT INTO notifications VALUES(?,?,?)",id(),message,System.currentTimeMillis()); }
+    public static void notify(Connection c,String message) throws SQLException { exec(c,"INSERT INTO notifications VALUES(?,?,?)",id(),message,System.currentTimeMillis()); Delivery.enqueue(c,message); }
 }

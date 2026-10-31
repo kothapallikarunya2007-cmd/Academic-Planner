@@ -1,0 +1,9 @@
+.git
+.m2
+.tools
+target
+data
+runtime
+.env*
+*.log
+.vercel

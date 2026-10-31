@@ -2,6 +2,10 @@
 
 An integrated academic coordination platform built with **Java 25+, Jakarta Servlets, embedded Apache Tomcat, JDBC, and plain HTML/CSS/JavaScript**. Includes a persistent local H2 database and JDBC configuration for PostgreSQL or MySQL.
 
+## Extended academic features
+
+Semester calendars, holidays and faculty leave; A/B weeks; multi-period exams with multiple invigilators; independently reviewed timetable drafts and publication history; configurable days, periods and timezone; durable email/SMS/push gateways; transactional CSV imports and CSV/JSON/iCalendar exports are included. See [the complete workflow and gateway setup](docs/ACADEMIC_FEATURES.md).
+
 ## Run on Windows
 
 Install a JDK 25 or later, then open PowerShell in this folder:
@@ -35,14 +39,14 @@ Demo data is inserted only into an empty database. It includes four courses, fou
 
 ## Demonstration workflow
 
-1. Sign in as administrator. Inspect **People**, **Courses**, and **Rooms & resources**; add your own records if desired.
-2. In **Availability**, mark faculty unavailable periods before scheduling.
-3. Select **Generate timetable** and confirm publication. All required sessions are scheduled together or the existing timetable is retained.
-4. Click a class on **Timetable** to move its day, period, or room. An invalid move is rejected with an explanation.
-5. Add an examination in an unused period (for the default data, afternoon periods are typically free), then select **Allocate invigilators**.
-6. Open another browser/private window and sign in as faculty. Send a message in **Campus chat** to see both sessions update live.
-7. Publish an announcement; inspect notifications and mark them read. Read state is stored separately for each account.
-8. Open **Reports** for workload, room utilization, coverage, conflict checks, and CSV export.
+1. Sign in as administrator. Configure the semester, teaching days, periods and timezone under **Academic calendar**.
+2. Inspect **People**, **Courses**, and **Rooms & resources**. Create a second administrator for independent review. Set course week patterns and faculty availability.
+3. Generate a timetable draft. In **Schedule review**, preview and submit it. Sign in as the second administrator, approve, then publish.
+4. Select a class to draft a move; submit, review and publish that change. Historical publications can be restored as new drafts.
+5. Add a multi-period exam with its required invigilator count, then allocate duties.
+6. Record holidays and approved date-specific faculty leave; inspect actual dated classes in **Academic calendar**.
+7. Demonstrate shared chat, announcements and per-user notification read state. Configure optional delivery preferences under **Settings**.
+8. Open **Imports & integrations** for CSV imports, academic JSON, CSV and calendar exports, gateway status and institutional sync.
 
 ## Features and permissions
 
@@ -50,8 +54,8 @@ Demo data is inserted only into an empty database. It includes four courses, fou
 | --- | --- | --- |
 | Accounts | Create faculty/admin accounts; change own password | View directory; change own password |
 | Resources | Add/remove courses and rooms | View courses and rooms |
-| Timetable | Generate and manually move classes | View shared timetable; filter own classes |
-| Exams | Create/remove exams; allocate all invigilators | View dates and assigned duties |
+| Timetable | Generate/review/publish drafts; draft class moves | View shared timetable; filter own classes |
+| Exams | Create multi-period exams; allocate multiple invigilators | View dates and assigned duties |
 | Availability | Edit any faculty availability | Edit only own availability |
 | Communication | Shared chat, announcements, notifications | Shared chat and notifications |
 | Reporting | Workload, utilization, CSV, conflict review | No report/export permission |
@@ -60,15 +64,13 @@ Authorization is enforced by the server, not only by hidden UI controls. The cha
 
 ## Scheduling rules
 
-- Five teaching days, Monday–Friday; six fixed one-hour periods daily, with breaks.
-- Each course has one assigned faculty member, one cohort, student count, and 1–15 weekly sessions.
-- A faculty member, cohort, or room cannot be booked for two classes in the same period. Room capacity and faculty unavailability are checked.
-- Generation uses bounded backtracking (200,000 search nodes) and favors spreading sessions through the week. Finding a mathematically possible solution is not guaranteed within the bound; failures preserve the previous publication.
-- Exams occupy one period on a date. Room capacity, cohort clashes, weekly teaching, and invigilator conflicts are checked.
-- The timetable repeats weekly without semester dates. An exam conservatively reserves its weekday/period during generation for all weeks. There is no holiday, term, multi-period exam, or alternating-week model.
-- Invigilators cannot teach the examined course. Allocation checks teaching, availability, and simultaneous exams; it tries lower-load faculty first. It is a fairness heuristic, not a proof of optimal balance.
-- All coordinated writes lock a shared database row, validate constraints, and commit or roll back together. Edits that invalidate existing assignments are rejected. Regeneration replaces manual class moves; allocation recalculates all exam duties.
-- Deleting a course removes its classes and exams in one transaction. A room still referenced by a class or exam cannot be deleted.
+- Semester dates, teaching weekdays, ordered periods and campus timezone are configurable. Courses run every week, week A or week B; week A starts on the Monday of the semester's first week.
+- Faculty, cohort, capacity and room conflicts are checked against actual dated teaching occurrences. Holidays and approved faculty leave cancel affected occurrences; replacements are not automatically created.
+- Exams occupy one or more consecutive configured periods and require one or more distinct invigilators. Course instructors cannot supervise their own exams. Every occupied period, faculty leave and concurrent duty is checked.
+- Generation and allocation use bounded backtracking (200,000 nodes), with atomic rollback on failure. Allocation favors lower workloads; optimal balance is not guaranteed.
+- Generated and manually moved teaching schedules become drafts. A different administrator must approve them before publication. Changes to academic inputs make existing drafts stale.
+- Coordinated writes use a shared database row lock. Removing holidays/leave revalidates reinstated teaching. Course deletion removes associated classes and exams; referenced rooms cannot be removed.
+- Publication history preserves assignment sets. Restoration creates a draft against current resources and calendar settings; it is not a full database restore.
 
 ## Configuration
 
@@ -127,7 +129,7 @@ Import `docs/campus-connect.postman_collection.json`. Default base URL: `http://
 | POST | `/api/login`, `/api/logout` | Session authentication |
 | GET | `/api/me`, `/api/state` | Current account and coordinated data |
 | POST | `/api/users`, `/api/rooms`, `/api/courses`, `/api/exams` | Create records |
-| POST | `/api/generate`, `/api/allocate` | Publish schedules and duties |
+| POST | `/api/generate`, `/api/allocate` | Create timetable drafts / publish exam duties |
 | POST | `/api/move`, `/api/availability`, `/api/delete` | Validated changes |
 | GET / POST | `/api/messages` | Latest chat history / send message |
 | GET | `/api/events` | SSE event stream |
@@ -135,7 +137,7 @@ Import `docs/campus-connect.postman_collection.json`. Default base URL: `http://
 | POST | `/api/password` | Change own password using current password |
 | GET | `/api/report` | Administrator CSV export |
 
-API errors return JSON `{ "error": "..." }` with 401 (not signed in), 403 (forbidden), 409 (invalid input/conflict), 413 (oversized body), 429 (login throttled), or 500 (unexpected failure). Unknown GET routes return 404. Input bodies are limited to 16 KiB.
+API errors return JSON `{ "error": "..." }` with 401 (not signed in), 403 (forbidden), 409 (invalid input/conflict), 413 (oversized body), 429 (login throttled), or 500 (unexpected failure). Unknown GET routes return 404. Input bodies are limited to 16 KiB, except CSV import requests (1 MiB). Additional academic, workflow, delivery and exchange endpoints are documented in [Academic features](docs/ACADEMIC_FEATURES.md).
 
 ## Architecture and syllabus mapping
 
@@ -159,7 +161,7 @@ Java ChatClient ── TCP ──> SocketChatServer ──────┘       
 
 ## Tests and project layout
 
-`mvn verify` runs JUnit integration tests against isolated in-memory databases. Tests cover credentials and roles, scheduling constraints, rejected moves, impossible schedule rollback, balanced invigilation, failed allocation rollback, faculty availability ownership, concurrent scheduling/chat, notification read state, and referential integrity. `ApiIntegrationTest` additionally exercises real Tomcat HTTP endpoints, cookies, authorization, live events, and the TCP bridge.
+`mvn verify` runs 22 JUnit tests against isolated in-memory databases. Tests cover credentials and roles, scheduling constraints, rejected moves, impossible schedule rollback, balanced invigilation, failed allocation rollback, faculty availability ownership, concurrent scheduling/chat, notification read state, and referential integrity. `ApiIntegrationTest` additionally exercises real Tomcat HTTP endpoints, cookies, authorization, live events, and the TCP bridge.
 
 ```text
 src/main/java/edu/campus/    Java application and scheduling services
@@ -169,6 +171,10 @@ scripts/                   Windows build/run helpers
 docs/                      Postman collection and design notes
 ```
 
-This is a local academic project implementation. Before institutional deployment, add HTTPS, managed secrets, account recovery and lifecycle administration, audit logs, database migrations, connection pooling, production monitoring, retention policies, and load tests. Notifications are in-app; email/SMS/push integrations are not included.
+This is a local academic project implementation. Before institutional deployment, add HTTPS, managed secrets, account recovery and lifecycle administration, audit logs, database migrations, connection pooling, production monitoring, retention policies, and load tests. Notifications are in-app with optional configurable email/SMS/push HTTPS gateways. Live gateways and institutional connections need their own configuration and verification.
 
 Technology references: [Tomcat 10.1 documentation](https://tomcat.apache.org/tomcat-10.1-doc/) and [Maven 3.9.11 release notes](https://maven.apache.org/docs/3.9.11/release-notes.html).
+
+## Vercel deployment
+
+See [Vercel deployment instructions](docs/VERCEL_DEPLOYMENT.md) for container packaging, production configuration, database initialization, and verification. Production uses shared database sessions with a fixed 30-minute lifetime.
